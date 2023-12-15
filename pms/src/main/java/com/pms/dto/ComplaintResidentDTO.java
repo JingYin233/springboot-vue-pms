@@ -25,4 +25,5 @@ public class ComplaintResidentDTO {
     private String name;
     private String contact;
     private int communityId;
+
 }

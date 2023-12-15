@@ -16,6 +16,7 @@ public class EquipmentPropertyDTO {
     private String equipmentName; // 设备名称
     private int equipmentStatus; // 设备状态，1正常，0故障
     private LocalDateTime lastMaintenance; // 最后维修日期
+    private String serialNumber;
 
     // Property表字段
     private String propertyName; // 物业名称

@@ -1,7 +1,12 @@
 package com.pms.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pms.dto.PrepaymentResidentDTO;
 import com.pms.entity.Prepayment;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.Map;
 
 /**
  * <p>
@@ -13,4 +18,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface PrepaymentService extends IService<Prepayment> {
 
+    IPage getPrepaymentsWithResident(Page<PrepaymentResidentDTO> page, Map<String, Object> params);
 }

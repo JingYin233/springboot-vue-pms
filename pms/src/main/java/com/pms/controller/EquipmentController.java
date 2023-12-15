@@ -34,13 +34,13 @@ public class EquipmentController {
     @Autowired
     private EquipmentService equipmentService;
 
-    @ApiOperation(value = "删除", notes = "根据repairId删除单条记录")
+    @ApiOperation(value = "删除", notes = "根据Id删除单条记录")
     @GetMapping("/delete")
     public boolean delete(Integer id) {
         return equipmentService.removeById(id);
     }
 
-    @ApiOperation(value = "更新", notes = "根据repairId更新单条记录")
+    @ApiOperation(value = "更新", notes = "根据Id更新单条记录")
     @PostMapping("/update")
     public Result update(@RequestBody Equipment equipment, HttpSession session) {
         return equipmentService.updateById(equipment)?Result.suc():Result.fail();
@@ -48,7 +48,7 @@ public class EquipmentController {
 
     @ApiOperation(value = "查询分页", notes = "")
     @PostMapping("/listPage")
-    public Result listPage(@RequestBody QueryPageParam query, Integer communityId) {
+    public Result listPage(@RequestBody QueryPageParam query, Integer a) {
         HashMap hashMap = query.getParam();
         String equipmentName = (String) hashMap.get("equipmentName");
         String equipmentStatus = (String)hashMap.get("equipmentStatus");
@@ -57,10 +57,10 @@ public class EquipmentController {
 
         //User user = (User) session.getAttribute("user");
 
-        if (communityId != null) {
+        if (a != null) {
             // 创建一个Map对象来存储查询参数
             Map<String, Object> params = new HashMap<>();
-            params.put("communityId", communityId);
+            params.put("communityId", a);
             params.put("equipmentName", equipmentName);
             params.put("equipmentStatus", equipmentStatus);
             params.put("lastMaintenanceStartDate", lastMaintenanceStartDate);

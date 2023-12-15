@@ -9,6 +9,7 @@
         <result column="description" property="description" />
         <result column="status" property="status" />
         <result column="date" property="date" />
+
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -27,7 +28,7 @@
         <result property="communityId" column="community_id" />
     </resultMap>
     <select id="selectComplaintsWithResidents" resultMap="complaintResidentDTOResultMap">
-        SELECT com.id, com.resident_id, com.description, com.status, com.date,
+        SELECT com.id, com.resident_id, com.description, com.status, com.date, com.serial_number,
         res.name, res.contact, res.community_id
         FROM complaint com
         INNER JOIN resident res ON com.resident_id = res.id

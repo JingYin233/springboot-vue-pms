@@ -1,8 +1,14 @@
 package com.pms.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pms.dto.PrepaymentResidentDTO;
 import com.pms.entity.Prepayment;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.Map;
 
 /**
  * <p>
@@ -16,4 +22,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PrepaymentMapper extends BaseMapper<Prepayment> {
 
+    IPage selectPrepaymentsWithResident(@Param("page") Page<PrepaymentResidentDTO> page, @Param("params") Map<String, Object> params);
 }

@@ -15,5 +15,33 @@
         id, property_id, name, amount
     </sql>
 
+    <resultMap id="FeeItemPropertyDTOResultMap" type="com.pms.dto.FeeItemPropertyDTO">
+        <!-- FeeItem表字段 -->
+        <id property="feeItemId" column="id" />
+        <result property="propertyId" column="property_id" />
+        <result property="feeItemName" column="name" />
+        <result property="amount" column="amount" />
+
+        <!-- Property表字段 -->
+        <result property="propertyName" column="property_name" />
+        <result property="communityId" column="community_id" />
+        <result property="contact" column="contact" />
+        <result property="address" column="address" />
+    </resultMap>
+
+    <select id="selectFeeItemsWithProperty" resultMap="FeeItemPropertyDTOResultMap">
+        SELECT f.id, f.name, f.amount,
+        p.name AS property_name
+        FROM fee_item f
+        INNER JOIN property p ON f.property_id = p.id
+        WHERE p.community_id = #{params.communityId}
+        <if test="params.feeItemName != null and params.feeItemName != ''">
+            AND f.name = #{params.feeItemName}
+        </if>
+        <if test="params.amount != null">
+            AND f.amount = #{params.amount}
+        </if>
+    </select>
+
 
 </mapper>

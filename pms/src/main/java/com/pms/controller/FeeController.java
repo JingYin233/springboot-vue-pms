@@ -45,7 +45,7 @@ public class FeeController {
 
     @ApiOperation(value = "查询分页", notes = "")
     @PostMapping("/listPage")
-    public Result listPage(@RequestBody QueryPageParam query, Integer communityId) {
+    public Result listPage(@RequestBody QueryPageParam query, HttpSession session) {
         HashMap hashMap = query.getParam();
         String residentName = (String) hashMap.get("residentName");
         String feeItemName = (String) hashMap.get("feeItemName");
@@ -53,12 +53,12 @@ public class FeeController {
         String startDate = (String)hashMap.get("startDate");
         String endDate = (String)hashMap.get("endDate");
 
-        //User user = (User) session.getAttribute("user");
+        User user = (User) session.getAttribute("user");
 
-        if (communityId != null) {
+        if (user != null) {
             // 创建一个Map对象来存储查询参数
             Map<String, Object> params = new HashMap<>();
-            params.put("communityId", communityId);
+            params.put("communityId", user.getCommunityId());
             params.put("residentName", residentName);
             params.put("feeItemName", feeItemName);
             params.put("status", status);

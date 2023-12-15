@@ -40,5 +40,6 @@ public class Equipment implements Serializable {
     @ApiModelProperty(value = "最后维修日期")
     private LocalDate lastMaintenance;
 
+    private String serialNumber;
 
 }
