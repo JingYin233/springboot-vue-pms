@@ -15,4 +15,5 @@
         id, property_id, name, amount
     </sql>
 
+
 </mapper>

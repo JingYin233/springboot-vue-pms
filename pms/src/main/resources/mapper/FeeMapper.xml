@@ -17,4 +17,44 @@
         id, resident_id, property_id, fee_item_id, date, status
     </sql>
 
+    <resultMap id="feeResidentItemDTOResultMap" type="com.pms.dto.FeeResidentItemDTO">
+        <!-- Fee表字段 -->
+        <id property="feeId" column="id" />
+        <result property="residentId" column="resident_id" />
+        <result property="propertyId" column="property_id" />
+        <result property="feeItemId" column="fee_item_id" />
+        <result property="feeDate" column="date" />
+        <result property="status" column="status" />
+
+        <!-- Resident表字段 -->
+        <result property="residentName" column="res_name" />
+        <result property="contact" column="contact" />
+        <result property="communityId" column="community_id" />
+
+        <!-- FeeItem表字段 -->
+        <result property="feeItemName" column="item_name" />
+        <result property="amount" column="amount" />
+    </resultMap>
+    <select id="selectFeesWithResidentsAndItems" resultMap="feeResidentItemDTOResultMap">
+        SELECT fee.id, fee.resident_id, fee.property_id, fee.fee_item_id, fee.date, fee.status,
+        res.name AS res_name, res.contact, res.community_id,
+        item.name AS item_name, item.amount
+        FROM fee
+        INNER JOIN resident res ON fee.resident_id = res.id
+        INNER JOIN fee_item item ON fee.fee_item_id = item.id
+        WHERE res.community_id = #{params.communityId}
+        <if test="params.residentName != null">
+            AND res.name = #{params.residentName}
+        </if>
+        <if test="params.feeItemName != null">
+            AND item.name = #{params.feeItemName}
+        </if>
+        <if test="params.status != null">
+            AND fee.status = #{params.status}
+        </if>
+        <if test="params.startDate != null and params.endDate != null">
+            AND fee.date BETWEEN #{params.startDate} AND #{params.endDate}
+        </if>
+    </select>
+
 </mapper>
