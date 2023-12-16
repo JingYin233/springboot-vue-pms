@@ -43,5 +43,5 @@ public class PropertyMeter implements Serializable {
     @ApiModelProperty(value = "仪表状态，1正常，0故障")
     private Integer status;
 
-
+    private String serialNumber;
 }
