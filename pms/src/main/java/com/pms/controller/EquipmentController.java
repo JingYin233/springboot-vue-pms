@@ -7,6 +7,7 @@ import com.pms.common.QueryPageParam;
 import com.pms.common.Result;
 import com.pms.dto.EquipmentPropertyDTO;
 import com.pms.entity.Equipment;
+import com.pms.entity.User;
 import com.pms.service.EquipmentService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,19 +46,19 @@ public class EquipmentController {
 
     @ApiOperation(value = "查询分页", notes = "")
     @PostMapping("/listPage")
-    public Result listPage(@RequestBody QueryPageParam query, Integer a) {
+    public Result listPage(@RequestBody QueryPageParam query, HttpSession session) {
         HashMap hashMap = query.getParam();
         String equipmentName = (String) hashMap.get("equipmentName");
         String equipmentStatus = (String)hashMap.get("equipmentStatus");
         String lastMaintenanceStartDate = (String)hashMap.get("lastMaintenanceStartDate");
         String lastMaintenanceEndDate = (String)hashMap.get("lastMaintenanceEndDate");
 
-        //User user = (User) session.getAttribute("user");
+        User user = (User) session.getAttribute("user");
 
-        if (a != null) {
+        if (user != null) {
             // 创建一个Map对象来存储查询参数
             Map<String, Object> params = new HashMap<>();
-            params.put("communityId", a);
+            params.put("communityId", user.getCommunityId());
             params.put("equipmentName", equipmentName);
             params.put("equipmentStatus", equipmentStatus);
             params.put("lastMaintenanceStartDate", lastMaintenanceStartDate);

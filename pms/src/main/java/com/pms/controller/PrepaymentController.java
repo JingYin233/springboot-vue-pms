@@ -41,6 +41,7 @@ public class PrepaymentController {
     @ApiOperation(value = "更新", notes = "根据Id更新单条记录")
     @PostMapping("/update")
     public Result update(@RequestBody Prepayment prepayment, HttpSession session) {
+        System.out.println(prepayment.getDate());
         return prepaymentService.updateById(prepayment)?Result.suc():Result.fail();
     }
 

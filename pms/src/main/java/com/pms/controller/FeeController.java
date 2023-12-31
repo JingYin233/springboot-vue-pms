@@ -40,6 +40,7 @@ public class FeeController {
     @ApiOperation(value = "更新", notes = "根据complaintId更新单条记录")
     @PostMapping("/update")
     public Result update(@RequestBody Fee fee, HttpSession session) {
+        System.out.println(fee);
         return feeService.updateById(fee)?Result.suc():Result.fail();
     }
 

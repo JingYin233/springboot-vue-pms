@@ -86,6 +86,7 @@ public class RepairController {
     @ApiOperation(value = "更新", notes = "根据repairId更新单条记录")
     @PostMapping("/update")
     public Result update(@RequestBody Repair repair, HttpSession session) {
+        System.out.println(repair.getDescription());
         return repairService.updateById(repair)?Result.suc():Result.fail();
     }
 

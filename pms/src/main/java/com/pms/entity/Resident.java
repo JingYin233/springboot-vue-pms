@@ -51,7 +51,4 @@ public class Resident implements Serializable {
     @ApiModelProperty(value = "离开日期")
     private LocalDate moveOutDate;
 
-    @ApiModelProperty(value = "住户报修")
-    private List<Repair> repairs;
-
 }
