@@ -46,4 +46,24 @@ public class MeterDataController {
         List<MeterData> results = meterDataService.list(lambdaQueryWrapper);
         return results.isEmpty()?Result.fail():Result.suc(results, (long) results.size());
     }
+
+    @ApiOperation(value = "新增该仪表的所有数值", notes = "传入单个仪表数据对象保存到数据库中")
+    @PostMapping("/addMeterData")
+    public Result addMeterData(@RequestBody MeterData meterData) {
+        // 检查meterData的attribute是否为null
+        if (meterData.getAttribute() == null) {
+            return Result.fail("Attribute cannot be null");
+        }
+
+        // 检查meterData的value是否为null
+        if (meterData.getValue() == null) {
+            return Result.fail("Value cannot be null");
+        }
+
+        // 保存meterData对象
+        boolean save = meterDataService.save(meterData);
+
+        return save ? Result.suc() : Result.fail();
+    }
+
 }

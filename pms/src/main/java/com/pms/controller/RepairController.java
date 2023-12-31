@@ -39,7 +39,7 @@ public class RepairController {
     @Autowired
     private RepairService repairService;
 
-    @ApiOperation(value = "查询分页", notes = "")
+    @ApiOperation(value = "查询分页", notes = "分页查询repair表的信息")
     @PostMapping("/listPage")
     public Result listPage(@RequestBody QueryPageParam query, HttpSession session) {
         HashMap hashMap = query.getParam();
@@ -85,7 +85,7 @@ public class RepairController {
 
     @ApiOperation(value = "更新", notes = "根据repairId更新单条记录")
     @PostMapping("/update")
-    public Result update(@RequestBody Repair repair, HttpSession session) {
+    public Result update(@RequestBody Repair repair) {
         System.out.println(repair.getDescription());
         return repairService.updateById(repair)?Result.suc():Result.fail();
     }

@@ -35,6 +35,9 @@ public class FeeItemController {
     @Autowired
     private FeeItemService feeItemService;
 
+    @Autowired
+    private PropertyController propertyController;
+
     @ApiOperation(value = "删除", notes = "根据Id删除单条记录")
     @GetMapping("/delete")
     public boolean delete(Integer id) {
@@ -48,7 +51,7 @@ public class FeeItemController {
         return feeItemService.updateById(feeItem)?Result.suc():Result.fail();
     }
 
-    @ApiOperation(value = "查询分页", notes = "")
+    @ApiOperation(value = "查询分页", notes = "分页查询收费项目")
     @PostMapping("/listPage")
     public Result listPage(@RequestBody QueryPageParam query, HttpSession session) {
         HashMap hashMap = query.getParam();
@@ -73,6 +76,24 @@ public class FeeItemController {
             // 用户未登录
             return Result.fail();
         }
+    }
+
+    @ApiOperation(value = "新增", notes = "收费项目的新增接口")
+    @PostMapping("/saveFeeItem")
+    public Result saveFeeItem(@RequestBody FeeItem feeItem, HttpSession session) {
+        // 从session中获取communityId
+        Integer communityId = (Integer) session.getAttribute("communityId");
+
+        // 根据communityId查询property表以获取物业主键
+        Integer propertyId = propertyController.getPropertyIdByCommunityId(communityId);
+
+        // 将物业主键赋值给feeItem对象
+        feeItem.setPropertyId(propertyId);
+
+        // 保存feeItem对象
+        boolean save = feeItemService.save(feeItem);
+
+        return save ? Result.suc() : Result.fail();
     }
 
 }

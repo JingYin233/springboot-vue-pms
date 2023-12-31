@@ -32,6 +32,9 @@ public class EquipmentController {
     @Autowired
     private EquipmentService equipmentService;
 
+    @Autowired
+    private PropertyController propertyController;
+
     @ApiOperation(value = "删除", notes = "根据Id删除单条记录")
     @GetMapping("/delete")
     public boolean delete(Integer id) {
@@ -76,5 +79,23 @@ public class EquipmentController {
             // 用户未登录
             return Result.fail();
         }
+    }
+
+    @ApiOperation(value = "新增", notes = "设备的新增接口")
+    @PostMapping("/saveEquipment")
+    public Result saveEquipment(@RequestBody Equipment equipment, HttpSession session) {
+        // 从session中获取communityId
+        Integer communityId = (Integer) session.getAttribute("communityId");
+
+        // 根据communityId查询property表以获取物业主键
+        Integer propertyId = propertyController.getPropertyIdByCommunityId(communityId);
+
+        // 将物业主键赋值给equipment对象
+        equipment.setPropertyId(propertyId);
+
+        // 保存equipment对象
+        boolean save = equipmentService.save(equipment);
+
+        return save ? Result.suc() : Result.fail();
     }
 }

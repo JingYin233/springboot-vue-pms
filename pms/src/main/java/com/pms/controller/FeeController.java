@@ -31,6 +31,12 @@ public class FeeController {
     @Autowired
     private FeeService feeService;
 
+    @Autowired
+    private ResidentController residentController;
+
+    @Autowired
+    private PropertyController propertyController;
+
     @ApiOperation(value = "删除", notes = "根据complaintId删除单条记录")
     @GetMapping("/delete")
     public boolean delete(Integer id) {
@@ -44,7 +50,7 @@ public class FeeController {
         return feeService.updateById(fee)?Result.suc():Result.fail();
     }
 
-    @ApiOperation(value = "查询分页", notes = "")
+    @ApiOperation(value = "查询分页", notes = "分页查询收费项目")
     @PostMapping("/listPage")
     public Result listPage(@RequestBody QueryPageParam query, HttpSession session) {
         HashMap hashMap = query.getParam();
@@ -78,5 +84,34 @@ public class FeeController {
             // 用户未登录
             return Result.fail();
         }
+    }
+
+    @ApiOperation(value = "新增收费项目", notes = "需要输入Fee的json数据，同时输入单元号和房间号得到住户主键，通过session获得物业主键")
+    @PostMapping("/save")
+    public Result save(@RequestBody Fee fee, String unitNumber, String roomNumber, HttpSession session) {
+        // 检查fee是否为null
+        if (fee == null) {
+            return Result.fail("Fee cannot be null");
+        }
+
+        // 从session中获取communityId
+        Integer communityId = (Integer) session.getAttribute("communityId");
+
+        // 根据communityId查询property表以获取物业主键
+        Integer propertyId = propertyController.getPropertyIdByCommunityId(communityId);
+
+        // 将物业主键赋值给fee对象
+        fee.setPropertyId(propertyId);
+
+        // 根据单元号和房间号查询resident表以获取住户主键
+        Integer residentId = residentController.getResidentIdByUnitAndRoom(unitNumber, roomNumber);
+
+        // 将住户主键赋值给fee对象
+        fee.setResidentId(residentId);
+
+        // 保存fee对象
+        boolean save = feeService.save(fee);
+
+        return save ? Result.suc() : Result.fail();
     }
 }

@@ -1,6 +1,9 @@
 package com.pms.controller;
 
 
+import com.pms.entity.Property;
+import com.pms.service.PropertyService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
@@ -16,5 +19,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/property")
 public class PropertyController {
+
+    @Autowired
+    private PropertyService propertyService;
+
+    public Integer getPropertyIdByCommunityId(Integer communityId) {
+        // 查询property表以获取物业主键
+        // 使用lambdaQuery方法查询property表以获取物业主键
+        Property property = propertyService.lambdaQuery().eq(Property::getCommunityId, communityId).one();
+
+        // 如果没有找到对应的物业，返回null
+        if (property == null) {
+            return null;
+        }
+
+        // 返回物业主键
+        return property.getId();
+    }
 
 }

@@ -9,6 +9,7 @@ import com.pms.common.Result;
 import com.pms.entity.Resident;
 import com.pms.entity.User;
 import com.pms.service.ResidentService;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,27 +33,8 @@ public class ResidentController {
     @Autowired
     private ResidentService residentService;
 
-    //查询
-    @GetMapping("/list")
-    public List<Resident> list() {
-        return residentService.list();
-    }
-
-    //查询（匹配）
-    @PostMapping("/listP")
-    public Result listP(HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user != null) {
-            // 用户已登录，返回用户信息
-            LambdaQueryWrapper<Resident> lambdaQueryWrapper = new LambdaQueryWrapper();
-            lambdaQueryWrapper.eq(Resident::getCommunityId, user.getCommunityId());
-            return Result.suc(residentService.list(lambdaQueryWrapper));
-        } else {
-            // 用户未登录
-            return Result.fail();
-        }
-    }
     //查询（分页）
+    @ApiOperation(value = "查询分页", notes = "分页查询resident表")
     @PostMapping("/listPage")
     public Result listPage(@RequestBody QueryPageParam query, HttpSession session) {
         HashMap param = query.getParam();
@@ -85,6 +67,7 @@ public class ResidentController {
     }
 
     //新增
+    @ApiOperation(value = "新增住户", notes = "PC端管理员新增小区内的住户")
     @PostMapping("/save")
     public Result save(@RequestBody Resident resident, HttpSession session) {
         User user = (User) session.getAttribute("user");
@@ -109,6 +92,7 @@ public class ResidentController {
     }
 
     //更新
+    @ApiOperation(value = "更新住户信息", notes = "PC端管理员更新小区内的住户信息")
     @PostMapping("/update")
     public Result update(@RequestBody Resident resident, HttpSession session) {
         User user = (User) session.getAttribute("user");
@@ -132,8 +116,29 @@ public class ResidentController {
     }
 
     //删除
+    @ApiOperation(value = "删除住户", notes = "PC端管理员删除小区内的住户信息")
     @GetMapping("/delete")
     public boolean delete(Integer id) {
         return residentService.removeById(id);
     }
+
+    //根据单元号和房间号查询住户主键
+    public Integer getResidentIdByUnitAndRoom(String unitNumber, String roomNumber) {
+        // 创建查询条件
+        LambdaQueryWrapper<Resident> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(Resident::getUnitNumber, unitNumber);
+        lambdaQueryWrapper.eq(Resident::getRoomNumber, roomNumber);
+
+        // 执行查询
+        Resident resident = residentService.getOne(lambdaQueryWrapper);
+
+        // 如果没有找到对应的住户，返回null
+        if (resident == null) {
+            return null;
+        }
+
+        // 返回住户主键
+        return resident.getId();
+    }
+
 }

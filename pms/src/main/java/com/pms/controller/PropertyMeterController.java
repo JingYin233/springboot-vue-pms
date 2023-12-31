@@ -36,6 +36,9 @@ public class PropertyMeterController {
     private PropertyMeterService propertyMeterService;
 
     @Autowired
+    private PropertyController propertyController;
+
+    @Autowired
     private MeterDataService meterDataService;
 
     @Transactional
@@ -58,7 +61,7 @@ public class PropertyMeterController {
         return propertyMeterService.updateById(propertyMeter)?Result.suc():Result.fail();
     }
 
-    @ApiOperation(value = "查询分页", notes = "")
+    @ApiOperation(value = "查询分页", notes = "分页查询仪表信息")
     @PostMapping("/listPage")
     public Result listPage(@RequestBody QueryPageParam query, HttpSession session) {
         HashMap hashMap = query.getParam();
@@ -90,5 +93,23 @@ public class PropertyMeterController {
             // 用户未登录
             return Result.fail();
         }
+    }
+
+    @ApiOperation(value = "新增", notes = "物业仪表的新增接口")
+    @PostMapping("/save")
+    public Result save(@RequestBody PropertyMeter propertyMeter, HttpSession session) {
+        // 从session中获取communityId
+        Integer communityId = (Integer) session.getAttribute("communityId");
+
+        // 根据communityId查询property表以获取物业主键
+        Integer propertyId = propertyController.getPropertyIdByCommunityId(communityId);
+
+        // 将物业主键赋值给propertyMeter对象
+        propertyMeter.setPropertyId(propertyId);
+
+        // 保存propertyMeter对象
+        boolean save = propertyMeterService.save(propertyMeter);
+
+        return save ? Result.suc() : Result.fail();
     }
 }
