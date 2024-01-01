@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
@@ -39,21 +41,25 @@ public class UserController {
         return userService.list();
     }
 
-    //登录
-    @ApiOperation(value = "登录", notes = "所有用户登陆的接口，会通过session在后端存储用户登陆信息")
+    @ApiOperation(value = "登录", notes = "所有用户登陆的接口，会通过cookie在后端存储用户登陆信息")
     @PostMapping("/login")
-    public Result login(@RequestBody User user, HttpSession session) {
-        List list = userService.lambdaQuery()
+    public Result login(@RequestBody User user, HttpServletResponse response) {
+        List<User> list = userService.lambdaQuery()
                 .eq(User::getNo, user.getNo())
                 .eq(User::getPassword, user.getPassword()).list();
         if (list.size() > 0) {
-            // 登录成功，将用户信息存储到session中
-            session.setAttribute("user", list.get(0));
-            return Result.suc(list.get(0));
+            // 登录成功，将用户ID存储到cookie中
+            User loggedInUser = list.get(0);
+            Cookie cookie = new Cookie("userId", String.valueOf(loggedInUser.getId()));
+            cookie.setMaxAge(7 * 24 * 60 * 60); // 设置cookie有效期为7天
+            cookie.setPath("/"); // 设置cookie的路径为网站的根路径
+            response.addCookie(cookie);
+            return Result.suc(loggedInUser);
         } else {
             return Result.fail();
         }
     }
+
 
     //注册用户
     @ApiOperation(value = "注册用户", notes = "小程序端通过该接口注册小区服务平台的账号")

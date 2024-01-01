@@ -12,10 +12,13 @@ import com.pms.entity.FeeItem;
 import com.pms.entity.User;
 import com.pms.service.EquipmentService;
 import com.pms.service.FeeItemService;
+import com.pms.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,45 +41,61 @@ public class FeeItemController {
     @Autowired
     private PropertyController propertyController;
 
-    @ApiOperation(value = "删除", notes = "根据Id删除单条记录")
+    @Autowired
+    private UserService userService;
+
+    @ApiOperation(value = "分页查询收费项目信息", notes = "在验证用户登录状态后，根据查询参数进行分页查询收费项目信息")
+    @PostMapping("/listPage")
+    public Result listPage(@RequestBody QueryPageParam query, HttpServletRequest request) {
+        // 从请求中获取Cookie
+        Cookie[] cookies = request.getCookies();
+        String userId = null;
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("userId")) {
+                    userId = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        // 用户未登录
+        if(userId == null) {
+            return Result.fail("User is not logged in");
+        }
+
+        User user = userService.getById(Integer.valueOf(userId));
+        HashMap hashMap = query.getParam();
+        String feeItemName = (String) hashMap.get("feeItemName");
+
+        // 创建一个Map对象来存储查询参数
+        Map<String, Object> params = new HashMap<>();
+        params.put("communityId", user.getCommunityId());
+        params.put("feeItemName", feeItemName);
+
+        Page<FeeItemPropertyDTO> page = new Page();
+        page.setCurrent(query.getPageNum());
+        page.setSize(query.getPageSize());
+
+        IPage result = feeItemService.getFeeItemsWithProperty(page, params);
+
+        return Result.suc(result.getRecords(), result.getTotal());
+    }
+
+    @ApiOperation(value = "删除收费项目信息", notes = "根据提供的收费项目ID删除对应的收费项目信息")
     @GetMapping("/delete")
     public boolean delete(Integer id) {
         return feeItemService.removeById(id);
     }
 
-    @ApiOperation(value = "更新", notes = "根据Id更新单条记录")
+    @ApiOperation(value = "更新费用项", notes = "根据费用项的Id更新单条记录")
     @PostMapping("/update")
-    public Result update(@RequestBody FeeItem feeItem, HttpSession session) {
+    public Result update(@RequestBody FeeItem feeItem) {
         System.out.println(feeItem);
-        return feeItemService.updateById(feeItem)?Result.suc():Result.fail();
+        return feeItemService.updateById(feeItem) ? Result.suc() : Result.fail();
     }
 
-    @ApiOperation(value = "查询分页", notes = "分页查询收费项目")
-    @PostMapping("/listPage")
-    public Result listPage(@RequestBody QueryPageParam query, HttpSession session) {
-        HashMap hashMap = query.getParam();
-        String feeItemName = (String) hashMap.get("feeItemName");
 
-        User user = (User) session.getAttribute("user");
-
-        if (user != null) {
-            // 创建一个Map对象来存储查询参数
-            Map<String, Object> params = new HashMap<>();
-            params.put("communityId",  user.getCommunityId());
-            params.put("feeItemName", feeItemName);
-
-            Page<FeeItemPropertyDTO> page = new Page();
-            page.setCurrent(query.getPageNum());
-            page.setSize(query.getPageSize());
-
-            IPage result = feeItemService.getFeeItemsWithProperty(page, params);
-
-            return Result.suc(result.getRecords(), result.getTotal());
-        } else {
-            // 用户未登录
-            return Result.fail();
-        }
-    }
 
     @ApiOperation(value = "新增", notes = "收费项目的新增接口")
     @PostMapping("/saveFeeItem")

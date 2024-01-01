@@ -23,6 +23,12 @@ public class PropertyController {
     @Autowired
     private PropertyService propertyService;
 
+    /**
+     * 根据社区ID获取对应的物业主键。
+     *
+     * @param communityId 社区ID
+     * @return 如果找到对应的物业，返回物业主键；否则，返回null
+     */
     public Integer getPropertyIdByCommunityId(Integer communityId) {
         // 查询property表以获取物业主键
         // 使用lambdaQuery方法查询property表以获取物业主键
@@ -36,5 +42,4 @@ public class PropertyController {
         // 返回物业主键
         return property.getId();
     }
-
 }

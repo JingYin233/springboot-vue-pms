@@ -9,10 +9,13 @@ import com.pms.common.Result;
 import com.pms.entity.Resident;
 import com.pms.entity.User;
 import com.pms.service.ResidentService;
+import com.pms.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
@@ -33,25 +36,35 @@ public class ResidentController {
     @Autowired
     private ResidentService residentService;
 
-    //查询（分页）
-    @ApiOperation(value = "查询分页", notes = "分页查询resident表")
+    @Autowired
+    private UserService userService;
+
+    @ApiOperation(value = "分页查询住户信息", notes = "在验证用户登录状态后，根据查询参数进行分页查询住户信息")
     @PostMapping("/listPage")
-    public Result listPage(@RequestBody QueryPageParam query, HttpSession session) {
+    public Result listPage(@RequestBody QueryPageParam query, HttpServletRequest request) {
         HashMap param = query.getParam();
         String name = (String)param.get("name");
         String unitNumber = (String)param.get("unitNumber");
         String roomNumber = (String)param.get("roomNumber");
 
-        User user = (User) session.getAttribute("user");
+        // 从请求中获取Cookie
+        Cookie[] cookies = request.getCookies();
+        String userId = null;
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals("userId")) { // 修改这里
+                userId = cookie.getValue();
+                break;
+            }
+        }
 
-        if (user != null) {
+        if (userId != null) {
             // 用户已登录，返回用户信息
+            User user = userService.getById(Integer.valueOf(userId));
             LambdaQueryWrapper<Resident> lambdaQueryWrapper = new LambdaQueryWrapper();
             lambdaQueryWrapper.eq(Resident::getCommunityId, user.getCommunityId())
                     .like(Resident::getName, name)
                     .like(Resident::getUnitNumber, unitNumber)
                     .like(Resident::getRoomNumber, roomNumber);
-
 
             Page<Resident> page = new Page();
             page.setCurrent(query.getPageNum());
@@ -66,17 +79,27 @@ public class ResidentController {
         }
     }
 
-    //新增
-    @ApiOperation(value = "新增住户", notes = "PC端管理员新增小区内的住户")
+    @ApiOperation(value = "新增住户信息", notes = "管理员在验证用户登录状态后，新增小区内的住户信息")
     @PostMapping("/save")
-    public Result save(@RequestBody Resident resident, HttpSession session) {
-        User user = (User) session.getAttribute("user");
+    public Result save(@RequestBody Resident resident, HttpServletRequest request) {
+        // 从请求中获取Cookie
+        Cookie[] cookies = request.getCookies();
+        String userId = null;
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("userId")) {
+                    userId = cookie.getValue();
+                    break;
+                }
+            }
+        }
 
         // 用户未登录
-        if(user == null) {
+        if(userId == null) {
             return Result.fail("User is not logged in");
         }
 
+        User user = userService.getById(Integer.valueOf(userId));
         LambdaQueryWrapper<Resident> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(Resident::getCommunityId, user.getCommunityId())
                 .eq(Resident::getUnitNumber, resident.getUnitNumber())
@@ -91,15 +114,27 @@ public class ResidentController {
         return residentService.save(resident)?Result.suc():Result.fail();
     }
 
-    //更新
-    @ApiOperation(value = "更新住户信息", notes = "PC端管理员更新小区内的住户信息")
+    @ApiOperation(value = "更新住户信息", notes = "在验证用户登录状态后，更新小区内的住户信息")
     @PostMapping("/update")
-    public Result update(@RequestBody Resident resident, HttpSession session) {
-        User user = (User) session.getAttribute("user");
+    public Result update(@RequestBody Resident resident, HttpServletRequest request) {
+        // 从请求中获取Cookie
+        Cookie[] cookies = request.getCookies();
+        String userId = null;
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("userId")) {
+                    userId = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
         // 用户未登录
-        if(user == null) {
+        if(userId == null) {
             return Result.fail("User is not logged in");
         }
+
+        User user = userService.getById(Integer.valueOf(userId));
         LambdaQueryWrapper<Resident> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(Resident::getCommunityId, user.getCommunityId())
                 .eq(Resident::getUnitNumber, resident.getUnitNumber())
@@ -115,8 +150,8 @@ public class ResidentController {
         return residentService.updateById(resident)?Result.suc():Result.fail();
     }
 
-    //删除
-    @ApiOperation(value = "删除住户", notes = "PC端管理员删除小区内的住户信息")
+
+    @ApiOperation(value = "删除住户信息", notes = "管理员根据提供的住户ID删除小区内的住户信息")
     @GetMapping("/delete")
     public boolean delete(Integer id) {
         return residentService.removeById(id);
@@ -140,5 +175,4 @@ public class ResidentController {
         // 返回住户主键
         return resident.getId();
     }
-
 }

@@ -12,11 +12,14 @@ import com.pms.entity.PropertyMeter;
 import com.pms.entity.User;
 import com.pms.service.MeterDataService;
 import com.pms.service.PropertyMeterService;
+import com.pms.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,8 +44,88 @@ public class PropertyMeterController {
     @Autowired
     private MeterDataService meterDataService;
 
+    @Autowired
+    private UserService userService;
+
+    @ApiOperation(value = "分页查询仪表信息", notes = "在验证用户登录状态后，根据查询参数进行分页查询仪表信息")
+    @PostMapping("/listPage")
+    public Result listPage(@RequestBody QueryPageParam query, HttpServletRequest request) {
+        // 从请求中获取Cookie
+        Cookie[] cookies = request.getCookies();
+        String userId = null;
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("userId")) {
+                    userId = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        // 用户未登录
+        if(userId == null) {
+            return Result.fail("User is not logged in");
+        }
+
+        User user = userService.getById(Integer.valueOf(userId));
+        HashMap hashMap = query.getParam();
+        String equipmentName = (String) hashMap.get("equipmentName");
+        String equipmentStatus = (String)hashMap.get("equipmentStatus");
+        String lastMaintenanceStartDate = (String)hashMap.get("lastMaintenanceStartDate");
+        String lastMaintenanceEndDate = (String)hashMap.get("lastMaintenanceEndDate");
+
+        // 创建一个Map对象来存储查询参数
+        Map<String, Object> params = new HashMap<>();
+        params.put("communityId", user.getCommunityId());
+        params.put("equipmentName", equipmentName);
+        params.put("equipmentStatus", equipmentStatus);
+        params.put("lastMaintenanceStartDate", lastMaintenanceStartDate);
+        params.put("lastMaintenanceEndDate", lastMaintenanceEndDate);
+
+        Page<PropertyMeterPropertyDTO> page = new Page();
+        page.setCurrent(query.getPageNum());
+        page.setSize(query.getPageSize());
+
+        IPage result = propertyMeterService.getPropertyMetersWithProperty(page, params);
+
+        return Result.suc(result.getRecords(), result.getTotal());
+    }
+
+    @ApiOperation(value = "新增物业仪表信息", notes = "在验证用户登录状态后，新增物业仪表信息")
+    @PostMapping("/save")
+    public Result save(@RequestBody PropertyMeter propertyMeter, HttpServletRequest request) {
+        // 从请求中获取Cookie
+        Cookie[] cookies = request.getCookies();
+        String userId = null;
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("userId")) {
+                    userId = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        // 用户未登录
+        if(userId == null) {
+            return Result.fail("User is not logged in");
+        }
+
+        User user = userService.getById(Integer.valueOf(userId));
+        // 根据communityId查询property表以获取物业主键
+        Integer propertyId = propertyController.getPropertyIdByCommunityId(user.getCommunityId());
+
+        // 将物业主键赋值给propertyMeter对象
+        propertyMeter.setPropertyId(propertyId);
+
+        // 保存propertyMeter对象
+        boolean save = propertyMeterService.save(propertyMeter);
+
+        return save ? Result.suc() : Result.fail();
+    }
+
     @Transactional
-    @ApiOperation(value = "删除", notes = "根据Id删除单条记录,同时删除相关的数据信息")
+    @ApiOperation(value = "删除物业仪表信息", notes = "根据提供的物业仪表ID删除对应的物业仪表信息以及相关的数据信息")
     @GetMapping("/delete")
     public boolean delete(Integer id) {
         // 先删除meter_data表中的相关记录
@@ -54,62 +137,26 @@ public class PropertyMeterController {
         return propertyMeterService.removeById(id);
     }
 
-
-    @ApiOperation(value = "更新", notes = "根据Id更新单条记录")
+    @ApiOperation(value = "更新物业仪表信息", notes = "在验证用户登录状态后，根据提供的物业仪表信息更新对应的记录")
     @PostMapping("/update")
-    public Result update(@RequestBody PropertyMeter propertyMeter, HttpSession session) {
-        return propertyMeterService.updateById(propertyMeter)?Result.suc():Result.fail();
-    }
-
-    @ApiOperation(value = "查询分页", notes = "分页查询仪表信息")
-    @PostMapping("/listPage")
-    public Result listPage(@RequestBody QueryPageParam query, HttpSession session) {
-        HashMap hashMap = query.getParam();
-        String equipmentName = (String) hashMap.get("equipmentName");
-        String equipmentStatus = (String)hashMap.get("equipmentStatus");
-        String lastMaintenanceStartDate = (String)hashMap.get("lastMaintenanceStartDate");
-        String lastMaintenanceEndDate = (String)hashMap.get("lastMaintenanceEndDate");
-
-        User user = (User) session.getAttribute("user");
-
-        if (user != null) {
-            // 创建一个Map对象来存储查询参数
-            Map<String, Object> params = new HashMap<>();
-            params.put("communityId", user.getCommunityId());
-            params.put("equipmentName", equipmentName);
-            params.put("equipmentStatus", equipmentStatus);
-            params.put("lastMaintenanceStartDate", lastMaintenanceStartDate);
-            params.put("lastMaintenanceEndDate", lastMaintenanceEndDate);
-
-
-            Page<PropertyMeterPropertyDTO> page = new Page();
-            page.setCurrent(query.getPageNum());
-            page.setSize(query.getPageSize());
-
-            IPage result = propertyMeterService.getPropertyMetersWithProperty(page, params);
-
-            return Result.suc(result.getRecords(), result.getTotal());
-        } else {
-            // 用户未登录
-            return Result.fail();
+    public Result update(@RequestBody PropertyMeter propertyMeter, HttpServletRequest request) {
+        // 从请求中获取Cookie
+        Cookie[] cookies = request.getCookies();
+        String userId = null;
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("userId")) {
+                    userId = cookie.getValue();
+                    break;
+                }
+            }
         }
-    }
 
-    @ApiOperation(value = "新增", notes = "物业仪表的新增接口")
-    @PostMapping("/save")
-    public Result save(@RequestBody PropertyMeter propertyMeter, HttpSession session) {
-        // 从session中获取communityId
-        Integer communityId = (Integer) session.getAttribute("communityId");
+        // 用户未登录
+        if(userId == null) {
+            return Result.fail("User is not logged in");
+        }
 
-        // 根据communityId查询property表以获取物业主键
-        Integer propertyId = propertyController.getPropertyIdByCommunityId(communityId);
-
-        // 将物业主键赋值给propertyMeter对象
-        propertyMeter.setPropertyId(propertyId);
-
-        // 保存propertyMeter对象
-        boolean save = propertyMeterService.save(propertyMeter);
-
-        return save ? Result.suc() : Result.fail();
+        return propertyMeterService.updateById(propertyMeter)?Result.suc():Result.fail();
     }
 }
