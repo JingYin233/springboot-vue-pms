@@ -1,6 +1,9 @@
 package com.pms.controller;
 
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -16,7 +19,11 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -155,6 +162,107 @@ public class ResidentController {
     @GetMapping("/delete")
     public boolean delete(Integer id) {
         return residentService.removeById(id);
+    }
+
+    @ApiOperation(value = "导出分页查询的居民数据到Excel文件", notes = "在验证用户登录状态后，根据查询参数进行分页查询居民数据，并将数据导出到Excel文件")
+    @GetMapping("/export")
+    public void export(@RequestBody QueryPageParam query, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        HashMap param = query.getParam();
+        String name = (String)param.get("name");
+        String unitNumber = (String)param.get("unitNumber");
+        String roomNumber = (String)param.get("roomNumber");
+
+        // 从请求中获取Cookie
+        Cookie[] cookies = request.getCookies();
+        String userId = null;
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals("userId")) {
+                userId = cookie.getValue();
+                break;
+            }
+        }
+
+        List<Resident> dataList = new ArrayList<>();
+        if (userId != null) {
+            // 用户已登录，返回用户信息
+            User user = userService.getById(Integer.valueOf(userId));
+            LambdaQueryWrapper<Resident> lambdaQueryWrapper = new LambdaQueryWrapper();
+            lambdaQueryWrapper.eq(Resident::getCommunityId, user.getCommunityId())
+                    .like(Resident::getName, name)
+                    .like(Resident::getUnitNumber, unitNumber)
+                    .like(Resident::getRoomNumber, roomNumber);
+
+            Page<Resident> page = new Page();
+            page.setCurrent(query.getPageNum());
+            page.setSize(query.getPageSize());
+
+            IPage result = residentService.pageCC(page, lambdaQueryWrapper);
+            dataList = result.getRecords();
+        }
+
+        // 设置响应头
+        response.setContentType("application/vnd.ms-excel");
+        response.setCharacterEncoding("utf-8");
+        String fileName = URLEncoder.encode("residents.xlsx", "UTF-8");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName);
+
+        // 创建一个ExcelWriter
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream(), Resident.class).build();
+
+        // 写入数据
+        WriteSheet writeSheet = EasyExcel.writerSheet("Sheet1").build();
+        excelWriter.write(dataList, writeSheet);
+
+        // 关闭ExcelWriter
+        excelWriter.finish();
+    }
+
+    @ApiOperation(value = "导出所有居民数据到Excel文件", notes = "在验证用户登录状态后，查询所有满足条件的居民数据，并将数据导出到Excel文件")
+    @GetMapping("/exportAll")
+    public void exportAll(@RequestBody QueryPageParam query, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        HashMap param = query.getParam();
+        String name = (String)param.get("name");
+        String unitNumber = (String)param.get("unitNumber");
+        String roomNumber = (String)param.get("roomNumber");
+
+        // 从请求中获取Cookie
+        Cookie[] cookies = request.getCookies();
+        String userId = null;
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals("userId")) {
+                userId = cookie.getValue();
+                break;
+            }
+        }
+
+        List<Resident> dataList = new ArrayList<>();
+        if (userId != null) {
+            // 用户已登录，返回用户信息
+            User user = userService.getById(Integer.valueOf(userId));
+            LambdaQueryWrapper<Resident> lambdaQueryWrapper = new LambdaQueryWrapper();
+            lambdaQueryWrapper.eq(Resident::getCommunityId, user.getCommunityId())
+                    .like(Resident::getName, name)
+                    .like(Resident::getUnitNumber, unitNumber)
+                    .like(Resident::getRoomNumber, roomNumber);
+
+            dataList = residentService.list(lambdaQueryWrapper);
+        }
+
+        // 设置响应头
+        response.setContentType("application/vnd.ms-excel");
+        response.setCharacterEncoding("utf-8");
+        String fileName = URLEncoder.encode("residents.xlsx", "UTF-8");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName);
+
+        // 创建一个ExcelWriter
+        ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream(), Resident.class).build();
+
+        // 写入数据
+        WriteSheet writeSheet = EasyExcel.writerSheet("Sheet1").build();
+        excelWriter.write(dataList, writeSheet);
+
+        // 关闭ExcelWriter
+        excelWriter.finish();
     }
 
     //根据单元号和房间号查询住户主键
