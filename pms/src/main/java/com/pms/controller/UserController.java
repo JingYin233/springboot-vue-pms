@@ -6,7 +6,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pms.common.QueryPageParam;
 import com.pms.common.Result;
+import com.pms.dto.UserResidentDTO;
+import com.pms.entity.Resident;
 import com.pms.entity.User;
+import com.pms.service.ResidentService;
 import com.pms.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
@@ -35,6 +39,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ResidentService residentService;
 
     @GetMapping("/list")
     public List<User> list() {
@@ -59,7 +66,6 @@ public class UserController {
             return Result.fail();
         }
     }
-
 
     //注册用户
     @ApiOperation(value = "注册用户", notes = "小程序端通过该接口注册小区服务平台的账号")
@@ -111,6 +117,32 @@ public class UserController {
         boolean save = userService.save(user);
 
         return save?Result.suc():Result.fail();
+    }
+
+    //获取用户信息同时根据住户主键获取住户信息
+    @ApiOperation(value = "获取用户信息")
+    @PostMapping("/getUserData")
+    public Result getUserData(HttpServletRequest request) {
+        // 从请求中获取Cookie
+        Cookie[] cookies = request.getCookies();
+        String userId = null;
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals("userId")) { // 修改这里
+                userId = cookie.getValue();
+                break;
+            }
+        }
+        if (userId == null) {
+            return Result.fail("User is not logged in");
+        }
+
+        User user = userService.getById(Integer.valueOf(userId));
+
+        Resident resident = residentService.getById(user.getResidentId());
+
+        UserResidentDTO userResidentDTO = new UserResidentDTO(user, resident);
+
+        return Result.suc(userResidentDTO);
     }
 
     //新增

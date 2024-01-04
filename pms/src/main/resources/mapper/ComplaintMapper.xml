@@ -48,5 +48,8 @@
         <if test="params.keyword != null and params.keyword != ''">
             AND com.description LIKE CONCAT('%', #{params.keyword}, '%')
         </if>
+        <if test="params.residentId != null">
+            AND com.resident_id = #{params.residentId}
+        </if>
     </select>
 </mapper>

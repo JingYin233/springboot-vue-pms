@@ -55,6 +55,9 @@
         <if test="params.startDate != null and params.endDate != null">
             AND fee.date BETWEEN #{params.startDate} AND #{params.endDate}
         </if>
+        <if test="params.residentId != null">
+            AND fee.resident_id = #{params.residentId}
+        </if>
     </select>
 
 </mapper>

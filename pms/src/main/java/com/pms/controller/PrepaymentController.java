@@ -80,6 +80,7 @@ public class PrepaymentController {
         params.put("contact", contact);
         params.put("amount", amount);
         params.put("prepaymentDate", prepaymentDate);
+        params.put("residentId", user.getResidentId());
 
         Page<PrepaymentResidentDTO> page = new Page();
         page.setCurrent(query.getPageNum());

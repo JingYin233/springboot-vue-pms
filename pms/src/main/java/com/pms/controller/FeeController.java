@@ -88,6 +88,7 @@ public class FeeController {
         params.put("status", status);
         params.put("startDate", startDate);
         params.put("endDate", endDate);
+        params.put("residentId", user.getResidentId());
 
         Page<FeeResidentItemDTO> page = new Page();
         page.setCurrent(query.getPageNum());
@@ -108,23 +109,25 @@ public class FeeController {
 
         // 从请求中获取Cookie
         Cookie[] cookies = request.getCookies();
-        String communityId = null;
+        String userId = null;
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("communityId")) {
-                    communityId = cookie.getValue();
+                if (cookie.getName().equals("userId")) {
+                    userId = cookie.getValue();
                     break;
                 }
             }
         }
 
         // 用户未登录
-        if(communityId == null) {
+        if(userId == null) {
             return Result.fail("User is not logged in");
         }
 
+        User user = userService.getById(Integer.valueOf(userId));
+
         // 根据communityId查询property表以获取物业主键
-        Integer propertyId = propertyController.getPropertyIdByCommunityId(Integer.valueOf(communityId));
+        Integer propertyId = propertyController.getPropertyIdByCommunityId(Integer.valueOf(user.getCommunityId()));
 
         // 将物业主键赋值给fee对象
         fee.setPropertyId(propertyId);

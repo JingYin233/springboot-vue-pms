@@ -36,7 +36,7 @@
             AND res.name = #{params.name}
         </if>
         <if test="params.contact != null">
-            AND res.name = #{params.contact}
+            AND res.contact = #{params.contact}
         </if>
         <if test="params.status != null">
             AND r.status = #{params.status}
@@ -46,6 +46,9 @@
         </if>
         <if test="params.keyword != null and params.keyword != ''">
             AND r.description LIKE CONCAT('%', #{params.keyword}, '%')
+        </if>
+        <if test="params.residentId != null">
+            AND r.resident_id = #{params.residentId}
         </if>
     </select>
 

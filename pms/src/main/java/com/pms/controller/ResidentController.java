@@ -157,7 +157,6 @@ public class ResidentController {
         return residentService.updateById(resident)?Result.suc():Result.fail();
     }
 
-
     @ApiOperation(value = "删除住户信息", notes = "管理员根据提供的住户ID删除小区内的住户信息")
     @GetMapping("/delete")
     public boolean delete(Integer id) {

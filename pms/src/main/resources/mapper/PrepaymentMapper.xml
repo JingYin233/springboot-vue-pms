@@ -48,6 +48,9 @@
         <if test="params.prepaymentDate != null">
             AND p.date = #{params.prepaymentDate}
         </if>
+        <if test="params.residentId != null">
+            AND p.resident_id = #{params.residentId}
+        </if>
     </select>
 
 

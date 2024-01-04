@@ -39,6 +39,4 @@ public class Repair implements Serializable {
 
     @ApiModelProperty(value = "报修日期")
     private LocalDateTime date;
-
-
 }

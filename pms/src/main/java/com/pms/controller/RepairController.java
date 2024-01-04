@@ -90,6 +90,7 @@ public class RepairController {
         params.put("startDate", startDate);
         params.put("endDate", endDate);
         params.put("keyword", keyword);
+        params.put("residentId", user.getResidentId());
 
         Page<RepairResidentDTO> page = new Page();
         page.setCurrent(query.getPageNum());
@@ -98,6 +99,35 @@ public class RepairController {
         IPage result = repairService.getRepairsWithResidents(page, params);
 
         return Result.suc(result.getRecords(), result.getTotal());
+    }
+
+    @ApiOperation(value = "保存报修请求", notes = "获取用户ID，验证登录状态，然后保存用户的报修请求")
+    @PostMapping("/save")
+    public Result save(@RequestBody Repair repair, HttpServletRequest request) {
+        // 从请求中获取Cookie
+        Cookie[] cookies = request.getCookies();
+        String userId = null;
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("userId")) {
+                    userId = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        // 用户未登录
+        if(userId == null) {
+            return Result.fail("User is not logged in");
+        }
+
+        User user = userService.getById(Integer.valueOf(userId));
+
+        repair.setResidentId(user.getResidentId());
+
+        boolean save = repairService.save(repair);
+
+        return save ? Result.suc() : Result.fail();
     }
 
     @ApiOperation(value = "删除维修信息", notes = "根据提供的维修ID删除对应的维修信息")

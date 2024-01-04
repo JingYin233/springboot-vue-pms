@@ -85,6 +85,7 @@ public class ComplaintController {
         params.put("startDate", startDate);
         params.put("endDate", endDate);
         params.put("keyword", keyword);
+        params.put("residentId", user.getResidentId());
 
         Page<ComplaintResidentDTO> page = new Page();
         page.setCurrent(query.getPageNum());
@@ -93,6 +94,35 @@ public class ComplaintController {
         IPage result = complaintService.getComplaintsWithResidents(page, params);
 
         return Result.suc(result.getRecords(), result.getTotal());
+    }
+
+    @ApiOperation(value = "保存投诉请求", notes = "获取用户ID，验证登录状态，然后保存用户的投诉请求")
+    @PostMapping("/save")
+    public Result save(@RequestBody Complaint complaint, HttpServletRequest request) {
+        // 从请求中获取Cookie
+        Cookie[] cookies = request.getCookies();
+        String userId = null;
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("userId")) {
+                    userId = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        // 用户未登录
+        if(userId == null) {
+            return Result.fail("User is not logged in");
+        }
+
+        User user = userService.getById(Integer.valueOf(userId));
+
+        complaint.setResidentId(user.getResidentId());
+
+        boolean save = complaintService.save(complaint);
+
+        return save ? Result.suc() : Result.fail();
     }
 
     @ApiOperation(value = "删除投诉", notes = "根据投诉的Id删除单条记录")
